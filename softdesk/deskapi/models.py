@@ -11,8 +11,8 @@ class Project(models.Model):
     """ Projet/produit/application en cours de développement ou de gestion """
 
     class Type(models.TextChoices):
-        BACK_END = 'back-end'
-        FRONT_END = 'front-end'
+        BACK_END = 'Back-end'
+        FRONT_END = 'Front-end'
         IOS = 'iOS'
         ANDROID = 'Android'
 
@@ -20,6 +20,9 @@ class Project(models.Model):
     description = models.TextField(max_length=2048, verbose_name="Description")
     type = models.CharField(choices=Type.choices, max_length=10, verbose_name="Type")
     contributors = models.ManyToManyField(to=User, through='Contributor')
+
+    def __str__(self):
+        return f'{self.title}'
 
 
 class Contributor(models.Model):
@@ -43,14 +46,14 @@ class Issue(models.Model):
     """ Problème d'un projet """
 
     class Tag(models.TextChoices):
-        BUG = 'BUG'
-        AMELIORATION = 'AMELIORATION'
-        TACHE = 'TACHE'
+        BUG = 'Bug'
+        AMELIORATION = 'Amélioration'
+        TACHE = 'Tâche'
 
     class Priority(models.TextChoices):
-        FAIBLE = 'FAIBLE'
-        MOYENNE = 'MOYENNE'
-        ELEVEE = 'ELEVEE'
+        FAIBLE = 'Faible'
+        MOYENNE = 'Moyenne'
+        ELEVEE = 'Elevée'
 
     class Status(models.TextChoices):
         A_FAIRE = 'A faire'
@@ -58,14 +61,17 @@ class Issue(models.Model):
         TERMINE = 'Terminé'
 
     title = models.CharField(max_length=128, verbose_name="Titre")
-    desc = models.TextField(max_length=2048, verbose_name="Description")
+    description = models.TextField(max_length=2048, verbose_name="Description")
     tag = models.CharField(choices=Tag.choices, max_length=15, verbose_name="Balise")
     priority = models.CharField(choices=Priority.choices, max_length=10, verbose_name="Priorité")
     status = models.CharField(choices=Status.choices, max_length=10, verbose_name="Statut")
     created_time = models.DateTimeField(auto_now_add=True)
-    project_id = models.ForeignKey(to=Project, null=True, on_delete=models.CASCADE)
+    project_id = models.ForeignKey(to=Project, null=True, on_delete=models.CASCADE, related_name='issues')
     author_user_id = models.ForeignKey(to=User, null=True, on_delete=models.SET_NULL, related_name='author')
-    assignee_user_id = models.ForeignKey(to=User, null=True, on_delete=models.SET_NULL, related_name='assign')
+    assignee_user_id = models.ForeignKey(to=User, null=True, on_delete=models.SET_NULL, related_name='assignee')
+
+    def __str__(self):
+        return f'{self.title}'
 
 
 class Comment(models.Model):
@@ -73,5 +79,5 @@ class Comment(models.Model):
 
     description = models.TextField(max_length=2048, verbose_name="Description")
     created_time = models.DateTimeField(auto_now_add=True)
-    issue_id = models.ForeignKey(to=Issue, null=True, on_delete=models.CASCADE)
+    issue_id = models.ForeignKey(to=Issue, null=True, on_delete=models.CASCADE, related_name='comments')
     author_user_id = models.ForeignKey(to=User, null=True, on_delete=models.SET_NULL)
