@@ -51,6 +51,13 @@ class ProjectListSerializer(ModelSerializer):
         fields = ['id', 'title']
 
 
+class ProjectDetailSerializer(ModelSerializer):
+
+    class Meta:
+        model = Project
+        fields = ['id', 'title', 'description', 'type']
+
+
 class ProjectDetailViewSetSerializer(ModelSerializer):
 
     contributors = UserListSerializer(many=True)

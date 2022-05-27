@@ -1,23 +1,47 @@
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework import status
 
 from django.db.models import Q
+from django.http import Http404
 
 from deskapi.models import User, Project, Issue, Comment
 from deskapi.serializers import ProjectListSerializer, IssueListSerializer, CommentListSerializer
+from deskapi.serializers import ProjectDetailSerializer
 from deskapi.serializers import ProjectDetailViewSetSerializer
 
 
-class ProjectAPIView(APIView):
+class ProjectListAPIView(APIView):
 
     def get(self, request, *args, **kwargs):
         projects = Project.objects.filter(contributors__in=User.objects.filter(id=request.user.id))
-        id_project = kwargs.get('id_project', None)
-        if id_project:
-            projects = projects.filter(id=id_project)
         serializer = ProjectListSerializer(projects, many=True)
         return Response(serializer.data)
+
+
+class ProjectDetailAPIView(APIView):
+
+    def get_object(self, id):
+        try:
+            return Project.objects.get(id=id)
+        except Project.DoesNotExist:
+            raise Http404
+
+    def get(self, request, *args, **kwargs):
+        id_project = kwargs.get('id_project', None)
+        project = self.get_object(id_project)
+        serializer = ProjectDetailSerializer(project)
+        return Response(serializer.data)
+
+    def put(self, request, *args, **kwargs):
+        id_project = kwargs.get('id_project', None)
+        project = Project.objects.get(id=id_project)
+        serializer = ProjectDetailSerializer(project, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class IssueAPIView(APIView):

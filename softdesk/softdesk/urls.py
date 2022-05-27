@@ -15,7 +15,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from deskapi.views import ProjectAPIView, IssueAPIView, CommentAPIView, ProjectViewSet
+from deskapi.views import ProjectListAPIView, ProjectDetailAPIView, IssueAPIView, CommentAPIView, ProjectViewSet
 from rest_framework import routers
 
 
@@ -25,8 +25,8 @@ router.register('projects', ProjectViewSet, basename='projects')
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api-auth/', include('rest_framework.urls')),
-    path('api/projects/', ProjectAPIView.as_view()),
-    path('api/projects/<int:id_project>/', ProjectAPIView.as_view()),
+    path('api/projects/', ProjectListAPIView.as_view()),
+    path('api/projects/<int:id_project>/', ProjectDetailAPIView.as_view()),
     path('api/projects/<int:id_project>/issues/', IssueAPIView.as_view()),
     path('api/projects/<int:id_project>/issues/<int:id_issue>/', IssueAPIView.as_view()),
     path('api/projects/<int:id_project>/issues/<int:id_issue>/comments/', CommentAPIView.as_view()),
