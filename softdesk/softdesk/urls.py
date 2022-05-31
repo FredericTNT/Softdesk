@@ -15,7 +15,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from deskapi.views import ProjectListAPIView, ProjectDetailAPIView, IssueAPIView, CommentAPIView, ProjectViewSet
+from deskapi.views import ProjectList, ProjectDetail, IssueList, IssueDetail, CommentList, CommentDetail, ProjectViewSet
 from rest_framework import routers
 
 
@@ -25,11 +25,11 @@ router.register('projects', ProjectViewSet, basename='projects')
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api-auth/', include('rest_framework.urls')),
-    path('api/projects/', ProjectListAPIView.as_view()),
-    path('api/projects/<int:id_project>/', ProjectDetailAPIView.as_view()),
-    path('api/projects/<int:id_project>/issues/', IssueAPIView.as_view()),
-    path('api/projects/<int:id_project>/issues/<int:id_issue>/', IssueAPIView.as_view()),
-    path('api/projects/<int:id_project>/issues/<int:id_issue>/comments/', CommentAPIView.as_view()),
-    path('api/projects/<int:id_project>/issues/<int:id_issue>/comments/<int:id_comment>/', CommentAPIView.as_view()),
+    path('api/projects/', ProjectList.as_view()),
+    path('api/projects/<int:id_project>/', ProjectDetail.as_view()),
+    path('api/projects/<int:id_project>/issues/', IssueList.as_view()),
+    path('api/projects/<int:id_project>/issues/<int:id_issue>/', IssueDetail.as_view()),
+    path('api/projects/<int:id_project>/issues/<int:id_issue>/comments/', CommentList.as_view()),
+    path('api/projects/<int:id_project>/issues/<int:id_issue>/comments/<int:id_comment>/', CommentDetail.as_view()),
     path('db/', include(router.urls)),
 ]

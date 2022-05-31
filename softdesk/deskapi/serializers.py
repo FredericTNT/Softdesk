@@ -1,4 +1,4 @@
-from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import ModelSerializer, ValidationError
 from deskapi.models import Project, Issue, Comment, User
 
 
@@ -9,14 +9,14 @@ class UserListSerializer(ModelSerializer):
         fields = ['id', 'username']
 
 
-class CommentListSerializer(ModelSerializer):
+class CommentSerializer(ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ['id', 'description', 'issue_id']
+        fields = ['id', 'description', 'created_time']
 
 
-class CommentDetailViewSetSerializer(ModelSerializer):
+class CommentViewSetSerializer(ModelSerializer):
 
     author_user_id = UserListSerializer(many=False)
 
@@ -25,18 +25,18 @@ class CommentDetailViewSetSerializer(ModelSerializer):
         fields = ['id', 'description', 'created_time', 'author_user_id']
 
 
-class IssueListSerializer(ModelSerializer):
+class IssueSerializer(ModelSerializer):
 
     class Meta:
         model = Issue
-        fields = ['id', 'title', 'status', 'project_id']
+        fields = ['id', 'title', 'description', 'tag', 'priority', 'status', 'created_time']
 
 
-class IssueDetailViewSetSerializer(ModelSerializer):
+class IssueViewSetSerializer(ModelSerializer):
 
     author_user_id = UserListSerializer(many=False)
     assignee_user_id = UserListSerializer(many=False)
-    comments = CommentDetailViewSetSerializer(many=True)
+    comments = CommentViewSetSerializer(many=True)
 
     class Meta:
         model = Issue
@@ -44,24 +44,22 @@ class IssueDetailViewSetSerializer(ModelSerializer):
                   'assignee_user_id', 'comments']
 
 
-class ProjectListSerializer(ModelSerializer):
-
-    class Meta:
-        model = Project
-        fields = ['id', 'title']
-
-
-class ProjectDetailSerializer(ModelSerializer):
+class ProjectSerializer(ModelSerializer):
 
     class Meta:
         model = Project
         fields = ['id', 'title', 'description', 'type']
 
+    def validate_title(self, value):
+        if Project.objects.filter(title=value).exists():
+            raise ValidationError('Projet existant avec le même titre')
+        return value
 
-class ProjectDetailViewSetSerializer(ModelSerializer):
+
+class ProjectViewSetSerializer(ModelSerializer):
 
     contributors = UserListSerializer(many=True)
-    issues = IssueDetailViewSetSerializer(many=True)
+    issues = IssueViewSetSerializer(many=True)
 
     class Meta:
         model = Project
