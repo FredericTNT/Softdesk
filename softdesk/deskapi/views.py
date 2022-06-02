@@ -4,42 +4,18 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from django.db.models import Q
-from django.http import Http404
+from django.shortcuts import get_object_or_404
 
-from deskapi.models import Project, Issue, Comment
+from deskapi.models import Project, Issue, Comment, User
 from deskapi.serializers import ProjectSerializer, IssueSerializer, CommentSerializer, ProjectViewSetSerializer
-
-
-def get_project(id):
-    """ Vérification de l'existence et sélection d'un projet """
-    try:
-        return Project.objects.get(id=id)
-    except Project.DoesNotExist:
-        raise Http404
-
-
-def get_issue(id_project, id):
-    """ Vérification de l'existence dans l'arborescence project/issue et sélection d'un problème """
-    try:
-        return Issue.objects.filter(project_id=id_project).get(id=id)
-    except Issue.DoesNotExist:
-        raise Http404
-
-
-def get_comment(id_project, id_issue, id):
-    """ Vérification de l'existence dans l'arborescence project/issue/comment et sélection d'un commentaire """
-    issues = Issue.objects.filter(project_id=id_project)
-    try:
-        return Comment.objects.filter(Q(issue_id__in=issues) & Q(issue_id=id_issue)).get(id=id)
-    except Comment.DoesNotExist:
-        raise Http404
+from deskapi.permissions import IsAdminAuthenticated, IsAuthor, IsContributor
 
 
 class ProjectList(APIView):
     """ Liste de tous les projets et création d'un projet """
 
     def get(self, request, *args, **kwargs):
-        projects = Project.objects.all()
+        projects = Project.objects.filter(contributors__in=User.objects.filter(id=request.user.id))
         serializer = ProjectSerializer(projects, many=True)
         return Response(serializer.data)
 
@@ -54,13 +30,20 @@ class ProjectList(APIView):
 class ProjectDetail(APIView):
     """ Détail, modification et suppression d'un projet """
 
+    permission_classes = [IsContributor]
+
+    def get_object(self):
+        project = get_object_or_404(Project, id=self.kwargs['id_project'])
+        self.check_object_permissions(self.request, project)
+        return project
+
     def get(self, request, *args, **kwargs):
-        project = get_project(kwargs['id_project'])
+        project = self.get_object()
         serializer = ProjectSerializer(project)
         return Response(serializer.data)
 
     def put(self, request, *args, **kwargs):
-        project = get_project(kwargs['id_project'])
+        project = self.get_object()
         serializer = ProjectSerializer(project, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -68,13 +51,19 @@ class ProjectDetail(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, *args, **kwargs):
-        project = get_project(kwargs['id_project'])
+        project = self.get_object()
         project.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class IssueList(APIView):
     """ Liste de tous les problèmes et création d'un problème """
+
+    permission_classes = [IsContributor]
+
+    def tree_project(self):
+        project = get_object_or_404(Project, id=self.kwargs['id_project'])
+        return project
 
     def get(self, request, *args, **kwargs):
         issues = Issue.objects.filter(project_id=kwargs['id_project'])
@@ -83,7 +72,7 @@ class IssueList(APIView):
 
     def post(self, request, *args, **kwargs):
         serializer = IssueSerializer(data=request.data)
-        project = get_project(kwargs['id_project'])
+        project = self.tree_project()
         if serializer.is_valid():
             serializer.save(project_id=project)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -93,13 +82,21 @@ class IssueList(APIView):
 class IssueDetail(APIView):
     """ Détail, modification et suppression d'un problème """
 
+    permission_classes = [IsContributor]
+
+    def get_object(self):
+        queryset = Issue.objects.filter(project_id=self.kwargs['id_project'])
+        issue = get_object_or_404(queryset, id=self.kwargs['id_issue'])
+        self.check_object_permissions(self.request, issue)
+        return issue
+
     def get(self, request, *args, **kwargs):
-        issue = get_issue(kwargs['id_project'], kwargs['id_issue'])
+        issue = self.get_object()
         serializer = IssueSerializer(issue)
         return Response(serializer.data)
 
     def put(self, request, *args, **kwargs):
-        issue = get_issue(kwargs['id_project'], kwargs['id_issue'])
+        issue = self.get_object()
         serializer = IssueSerializer(issue, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -107,13 +104,20 @@ class IssueDetail(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, *args, **kwargs):
-        issue = get_issue(kwargs['id_project'], kwargs['id_issue'])
+        issue = self.get_object()
         issue.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class CommentList(APIView):
     """ Liste de tous les commentaires et création d'un commentaire """
+
+    permission_classes = [IsContributor]
+
+    def tree_issue(self):
+        queryset = Issue.objects.filter(project_id=self.kwargs['id_project'])
+        issue = get_object_or_404(queryset, id=self.kwargs['id_issue'])
+        return issue
 
     def get(self, request, *args, **kwargs):
         issues = Issue.objects.filter(project_id=kwargs['id_project'])
@@ -123,7 +127,7 @@ class CommentList(APIView):
 
     def post(self, request, *args, **kwargs):
         serializer = CommentSerializer(data=request.data)
-        issue = get_issue(kwargs['id_project'], kwargs['id_issue'])
+        issue = self.tree_issue()
         if serializer.is_valid():
             serializer.save(issue_id=issue)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -133,13 +137,22 @@ class CommentList(APIView):
 class CommentDetail(APIView):
     """ Détail, modification et suppression d'un commentaire """
 
+    permission_classes = [IsContributor]
+
+    def get_object(self):
+        issues = Issue.objects.filter(project_id=self.kwargs['id_project'])
+        queryset = Comment.objects.filter(Q(issue_id__in=issues) & Q(issue_id=self.kwargs['id_issue']))
+        comment = get_object_or_404(queryset, id=self.kwargs['id_comment'])
+        self.check_object_permissions(self.request, comment)
+        return comment
+
     def get(self, request, *args, **kwargs):
-        comment = get_comment(kwargs['id_project'], kwargs['id_issue'], kwargs['id_comment'])
+        comment = self.get_object()
         serializer = IssueSerializer(comment)
         return Response(serializer.data)
 
     def put(self, request, *args, **kwargs):
-        comment = get_comment(kwargs['id_project'], kwargs['id_issue'], kwargs['id_comment'])
+        comment = self.get_object()
         serializer = CommentSerializer(comment, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -147,7 +160,7 @@ class CommentDetail(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, *args, **kwargs):
-        comment = get_comment(kwargs['id_project'], kwargs['id_issue'], kwargs['id_comment'])
+        comment = self.get_object()
         comment.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -155,6 +168,7 @@ class CommentDetail(APIView):
 class ProjectViewSet(ReadOnlyModelViewSet):
 
     serializer_class = ProjectViewSetSerializer
+#    permission_classes = [IsAdminAuthenticated]
 
     def get_queryset(self):
         return Project.objects.all()

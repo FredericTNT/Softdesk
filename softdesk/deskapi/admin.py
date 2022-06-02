@@ -14,8 +14,12 @@ class UserAdmin(admin.ModelAdmin):
     list_display = ('id', 'username')
 
 
+class ContributorAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user_id', 'project_id')
+
+
 admin.site.register(User, UserAdmin)
 admin.site.register(Project)
-admin.site.register(Contributor)
+admin.site.register(Contributor, ContributorAdmin)
 admin.site.register(Issue, IssueAdmin)
 admin.site.register(Comment, CommentAdmin)
