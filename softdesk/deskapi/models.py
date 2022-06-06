@@ -1,10 +1,5 @@
-from django.contrib.auth.models import AbstractUser
 from django.db import models
-
-
-class User(AbstractUser):
-    """ Utilisateur générique django """
-    pass
+from authentication.models import User
 
 
 class Project(models.Model):

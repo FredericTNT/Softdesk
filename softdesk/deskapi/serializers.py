@@ -1,5 +1,6 @@
 from rest_framework.serializers import ModelSerializer, ValidationError
-from deskapi.models import Project, Issue, Comment, User
+from authentication.models import User
+from deskapi.models import Project, Issue, Comment
 
 
 class UserViewSetSerializer(ModelSerializer):

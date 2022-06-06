@@ -26,7 +26,7 @@ router.register('projects', ProjectViewSet, basename='projects')
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api-auth/', include('rest_framework.urls')),
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/projects/', ProjectList.as_view()),
     path('api/projects/<int:id_project>/', ProjectDetail.as_view()),

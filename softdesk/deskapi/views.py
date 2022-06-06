@@ -6,7 +6,8 @@ from rest_framework import status
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 
-from deskapi.models import Project, Issue, Comment, User
+from authentication.models import User
+from deskapi.models import Project, Issue, Comment
 from deskapi.serializers import ProjectSerializer, IssueSerializer, CommentSerializer, ProjectViewSetSerializer
 from deskapi.permissions import IsAdminAuthenticated, IsAuthor, IsProjectAuthor, IsContributor
 
