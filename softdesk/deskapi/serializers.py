@@ -45,11 +45,12 @@ class ProjectSerializer(ModelSerializer):
     class Meta:
         model = Project
         fields = ['id', 'title', 'description', 'type']
-
+"""
     def validate_title(self, value):
         if Project.objects.filter(title=value).exists():
             raise ValidationError('Projet existant avec le même titre')
         return value
+"""
 
 
 class IssueSerializer(ModelSerializer):
@@ -59,9 +60,18 @@ class IssueSerializer(ModelSerializer):
         fields = ['id', 'title', 'description', 'tag', 'priority', 'status', 'created_time',
                   'author_user_id', 'assignee_user_id']
 
+    def validate_author_user_id(self, value):
+        return value
+
+    def validate_assignee_user_id(self, value):
+        return value
+
 
 class CommentSerializer(ModelSerializer):
 
     class Meta:
         model = Comment
         fields = ['id', 'description', 'created_time', 'author_user_id']
+
+    def validate_author_user_id(self, value):
+        return value

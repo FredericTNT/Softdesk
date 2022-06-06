@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404
 
 from deskapi.models import Project, Issue, Comment, User
 from deskapi.serializers import ProjectSerializer, IssueSerializer, CommentSerializer, ProjectViewSetSerializer
-from deskapi.permissions import IsAdminAuthenticated, IsAuthor, IsContributor
+from deskapi.permissions import IsAdminAuthenticated, IsAuthor, IsProjectAuthor, IsContributor
 
 
 class ProjectList(APIView):
@@ -30,7 +30,7 @@ class ProjectList(APIView):
 class ProjectDetail(APIView):
     """ Détail, modification et suppression d'un projet """
 
-    permission_classes = [IsContributor]
+    permission_classes = [IsContributor, IsProjectAuthor]
 
     def get_object(self):
         project = get_object_or_404(Project, id=self.kwargs['id_project'])
@@ -74,7 +74,7 @@ class IssueList(APIView):
         serializer = IssueSerializer(data=request.data)
         project = self.tree_project()
         if serializer.is_valid():
-            serializer.save(project_id=project)
+            serializer.save(project_id=project, author_user_id=request.user, assignee_user_id=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -82,7 +82,7 @@ class IssueList(APIView):
 class IssueDetail(APIView):
     """ Détail, modification et suppression d'un problème """
 
-    permission_classes = [IsContributor]
+    permission_classes = [IsContributor, IsAuthor]
 
     def get_object(self):
         queryset = Issue.objects.filter(project_id=self.kwargs['id_project'])
@@ -129,7 +129,7 @@ class CommentList(APIView):
         serializer = CommentSerializer(data=request.data)
         issue = self.tree_issue()
         if serializer.is_valid():
-            serializer.save(issue_id=issue)
+            serializer.save(issue_id=issue, author_user_id=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -137,7 +137,7 @@ class CommentList(APIView):
 class CommentDetail(APIView):
     """ Détail, modification et suppression d'un commentaire """
 
-    permission_classes = [IsContributor]
+    permission_classes = [IsContributor, IsAuthor]
 
     def get_object(self):
         issues = Issue.objects.filter(project_id=self.kwargs['id_project'])
