@@ -2,18 +2,22 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 
 from authentication.models import User
-from deskapi.models import Project, Issue, Comment
-from deskapi.serializers import ProjectSerializer, IssueSerializer, CommentSerializer, ProjectViewSetSerializer
-from deskapi.permissions import IsAdminAuthenticated, IsAuthor, IsProjectAuthor, IsContributor
+from deskapi.models import Project, Issue, Comment, Contributor
+from deskapi.serializers import ProjectSerializer, IssueSerializer, CommentSerializer, ContributorSerializer
+from deskapi.serializers import ProjectViewSetSerializer
+from deskapi.permissions import IsAdminAuthenticated, IsAuthor, IsProjectAuthor, IsContributor, IsContributorAuthor
 
 
 class ProjectList(APIView):
     """ Liste de tous les projets et création d'un projet """
+
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         projects = Project.objects.filter(contributors__in=User.objects.filter(id=request.user.id))
@@ -31,7 +35,7 @@ class ProjectList(APIView):
 class ProjectDetail(APIView):
     """ Détail, modification et suppression d'un projet """
 
-    permission_classes = [IsContributor, IsProjectAuthor]
+    permission_classes = [IsContributorAuthor]
 
     def get_object(self):
         project = get_object_or_404(Project, id=self.kwargs['id_project'])
@@ -54,6 +58,46 @@ class ProjectDetail(APIView):
     def delete(self, request, *args, **kwargs):
         project = self.get_object()
         project.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ContributorList(APIView):
+    """ Liste de tous les contributeurs et ajout d'un contributeur """
+
+    permission_classes = [IsContributor]
+
+    def tree_project(self):
+        project = get_object_or_404(Project, id=self.kwargs['id_project'])
+        return project
+
+    def get(self, request, *args, **kwargs):
+        contributors = Contributor.objects.filter(project_id=kwargs['id_project'])
+        serializer = ContributorSerializer(contributors, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, *args, **kwargs):
+        serializer = ContributorSerializer(data=request.data)
+        project = self.tree_project()
+        if serializer.is_valid():
+            serializer.save(project_id=project)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ContributorDelete(APIView):
+    """ Suppression d'un contributeur """
+
+    permission_classes = [IsContributorAuthor]
+
+    def get_object(self):
+        queryset = Contributor.objects.filter(project_id=self.kwargs['id_project'])
+        contributor = get_object_or_404(queryset, user_id=self.kwargs['id_user'])
+        self.check_object_permissions(self.request, contributor)
+        return contributor
+
+    def delete(self, request, *args, **kwargs):
+        contributor = self.get_object()
+        contributor.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -91,6 +135,13 @@ class IssueDetail(APIView):
         self.check_object_permissions(self.request, issue)
         return issue
 
+    def IsProjectContributor(self, user):
+        """ Vérifier si l'utilisateur est un contributeur du projet """
+        for contributor in Contributor.objects.filter(project_id=self.kwargs['id_project']):
+            if contributor.user_id == user:
+                return True
+        return False
+
     def get(self, request, *args, **kwargs):
         issue = self.get_object()
         serializer = IssueSerializer(issue)
@@ -99,7 +150,8 @@ class IssueDetail(APIView):
     def put(self, request, *args, **kwargs):
         issue = self.get_object()
         serializer = IssueSerializer(issue, data=request.data)
-        if serializer.is_valid():
+        if serializer.is_valid() and self.IsProjectContributor(serializer.validated_data['assignee_user_id']) and\
+                self.IsProjectContributor(serializer.validated_data['author_user_id']):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -147,15 +199,22 @@ class CommentDetail(APIView):
         self.check_object_permissions(self.request, comment)
         return comment
 
+    def IsProjectContributor(self, user):
+        """ Vérifier si l'utilisateur est un contributeur du projet """
+        for contributor in Contributor.objects.filter(project_id=self.kwargs['id_project']):
+            if contributor.user_id == user:
+                return True
+        return False
+
     def get(self, request, *args, **kwargs):
         comment = self.get_object()
-        serializer = IssueSerializer(comment)
+        serializer = CommentSerializer(comment)
         return Response(serializer.data)
 
     def put(self, request, *args, **kwargs):
         comment = self.get_object()
         serializer = CommentSerializer(comment, data=request.data)
-        if serializer.is_valid():
+        if serializer.is_valid() and self.IsProjectContributor(serializer.validated_data['author_user_id']):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -169,7 +228,7 @@ class CommentDetail(APIView):
 class ProjectViewSet(ReadOnlyModelViewSet):
 
     serializer_class = ProjectViewSetSerializer
-#    permission_classes = [IsAdminAuthenticated]
+    permission_classes = [IsAdminAuthenticated]
 
     def get_queryset(self):
         return Project.objects.all()

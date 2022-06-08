@@ -17,7 +17,9 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from deskapi.views import ProjectList, ProjectDetail, IssueList, IssueDetail, CommentList, CommentDetail, ProjectViewSet
+from deskapi.views import ProjectList, ProjectDetail, IssueList, IssueDetail, CommentList, CommentDetail
+from deskapi.views import ContributorList, ContributorDelete, ProjectViewSet
+from authentication.views import SignUp
 
 
 router = routers.SimpleRouter()
@@ -27,9 +29,12 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api-auth/', include('rest_framework.urls')),
     path('api/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/login/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/signup/', SignUp.as_view(), name='signup'),
     path('api/projects/', ProjectList.as_view()),
     path('api/projects/<int:id_project>/', ProjectDetail.as_view()),
+    path('api/projects/<int:id_project>/users/', ContributorList.as_view()),
+    path('api/projects/<int:id_project>/users/<int:id_user>/', ContributorDelete.as_view()),
     path('api/projects/<int:id_project>/issues/', IssueList.as_view()),
     path('api/projects/<int:id_project>/issues/<int:id_issue>/', IssueDetail.as_view()),
     path('api/projects/<int:id_project>/issues/<int:id_issue>/comments/', CommentList.as_view()),

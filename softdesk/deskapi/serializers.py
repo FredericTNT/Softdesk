@@ -1,6 +1,6 @@
-from rest_framework.serializers import ModelSerializer, ValidationError
+from rest_framework.serializers import ModelSerializer
 from authentication.models import User
-from deskapi.models import Project, Issue, Comment
+from deskapi.models import Project, Issue, Comment, Contributor
 
 
 class UserViewSetSerializer(ModelSerializer):
@@ -46,12 +46,6 @@ class ProjectSerializer(ModelSerializer):
     class Meta:
         model = Project
         fields = ['id', 'title', 'description', 'type']
-"""
-    def validate_title(self, value):
-        if Project.objects.filter(title=value).exists():
-            raise ValidationError('Projet existant avec le même titre')
-        return value
-"""
 
 
 class IssueSerializer(ModelSerializer):
@@ -61,12 +55,6 @@ class IssueSerializer(ModelSerializer):
         fields = ['id', 'title', 'description', 'tag', 'priority', 'status', 'created_time',
                   'author_user_id', 'assignee_user_id']
 
-    def validate_author_user_id(self, value):
-        return value
-
-    def validate_assignee_user_id(self, value):
-        return value
-
 
 class CommentSerializer(ModelSerializer):
 
@@ -74,5 +62,10 @@ class CommentSerializer(ModelSerializer):
         model = Comment
         fields = ['id', 'description', 'created_time', 'author_user_id']
 
-    def validate_author_user_id(self, value):
-        return value
+
+class ContributorSerializer(ModelSerializer):
+
+    class Meta:
+        model = Contributor
+        fields = ['id', 'user_id', 'permission', 'role']
+
