@@ -11,7 +11,7 @@ from authentication.models import User
 from deskapi.models import Project, Issue, Comment, Contributor
 from deskapi.serializers import ProjectSerializer, IssueSerializer, CommentSerializer, ContributorSerializer
 from deskapi.serializers import ProjectViewSetSerializer
-from deskapi.permissions import IsAdminAuthenticated, IsAuthor, IsProjectAuthor, IsContributor, IsContributorAuthor
+from deskapi.permissions import IsAdminAuthenticated, IsAuthor, IsContributor, IsContributorAuthor
 
 
 class ProjectList(APIView):

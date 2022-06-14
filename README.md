@@ -1,6 +1,6 @@
-[![python](./softdesk/static/badge/made-with-python.svg)](https://docs.python.org/fr/3.10/)
-[![python](./softdesk/static/badge/uses-django.svg)](https://docs.djangoproject.com/fr/4.0/)
-[![python](./softdesk/static/badge/authentication-by-jwt.svg)](https://django-rest-framework-simplejwt.readthedocs.io/en/latest/index.html)
+[![python](softdesk/static/badge/made-with-python.svg)](https://docs.python.org/fr/3.10/)
+[![python](softdesk/static/badge/uses-django.svg)](https://docs.djangoproject.com/fr/4.0/)
+[![python](softdesk/static/badge/authentication-by-jwt.svg)](https://django-rest-framework-simplejwt.readthedocs.io/en/latest/index.html)
 
 # SoftDesk
 
@@ -65,7 +65,7 @@ l'url suivante : http://localhost:8000/
 ## Screenshot
 ***
 API - Collection Postman
-<img src="./softdesk/static/screenshot/postman.jpg" alt="collection" />
+<img src="softdesk/static/screenshot/postman.jpg" alt="collection" />
 
 ## Conformité_PEP_8
 ***
@@ -81,7 +81,7 @@ flake8 et flake8-html dans l'environnement virtuel activé :
 Un rapport index.html est généré dans le sous-répertoire flake8_rapport avec la liste des éventuels points de
 non-conformité.
 
-<img src="/litreview/static/screenshot/Flake8.jpg" alt="PEP8" />
+<img src="softdesk/static/screenshot/PEP8.jpg" alt="PEP8" />
 <!---
 ## FAQs
 -->
