@@ -15,7 +15,7 @@ from deskapi.permissions import IsAdminAuthenticated, IsAuthor, IsProjectAuthor,
 
 
 class ProjectList(APIView):
-    """ Liste de tous les projets et création d'un projet """
+    """ Liste de tous les projets (GET) et création d'un projet (POST) """
 
     permission_classes = [IsAuthenticated]
 
@@ -28,12 +28,14 @@ class ProjectList(APIView):
         serializer = ProjectSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
+            project = get_object_or_404(Project, id=serializer.data['id'])
+            Contributor.objects.create(user_id=request.user, project_id=project, permission='Auteur', role='A définir')
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ProjectDetail(APIView):
-    """ Détail, modification et suppression d'un projet """
+    """ Détail (GET), modification (PUT) et suppression (DELETE) d'un projet """
 
     permission_classes = [IsContributorAuthor]
 
@@ -62,7 +64,7 @@ class ProjectDetail(APIView):
 
 
 class ContributorList(APIView):
-    """ Liste de tous les contributeurs et ajout d'un contributeur """
+    """ Liste de tous les contributeurs (GET) et ajout d'un contributeur (POST) """
 
     permission_classes = [IsContributor]
 
@@ -85,7 +87,7 @@ class ContributorList(APIView):
 
 
 class ContributorDelete(APIView):
-    """ Suppression d'un contributeur """
+    """ Suppression (DELETE) d'un contributeur """
 
     permission_classes = [IsContributorAuthor]
 
@@ -102,7 +104,7 @@ class ContributorDelete(APIView):
 
 
 class IssueList(APIView):
-    """ Liste de tous les problèmes et création d'un problème """
+    """ Liste de tous les problèmes (GET) et création d'un problème (POST) """
 
     permission_classes = [IsContributor]
 
@@ -125,7 +127,7 @@ class IssueList(APIView):
 
 
 class IssueDetail(APIView):
-    """ Détail, modification et suppression d'un problème """
+    """ Détail (GET), modification (PUT) et suppression (DELETE) d'un problème """
 
     permission_classes = [IsContributor, IsAuthor]
 
@@ -163,7 +165,7 @@ class IssueDetail(APIView):
 
 
 class CommentList(APIView):
-    """ Liste de tous les commentaires et création d'un commentaire """
+    """ Liste de tous les commentaires (GET) et création d'un commentaire (POST) """
 
     permission_classes = [IsContributor]
 
@@ -188,7 +190,7 @@ class CommentList(APIView):
 
 
 class CommentDetail(APIView):
-    """ Détail, modification et suppression d'un commentaire """
+    """ Détail (GET), modification (PUT) et suppression (DELETE) d'un commentaire """
 
     permission_classes = [IsContributor, IsAuthor]
 
@@ -226,9 +228,8 @@ class CommentDetail(APIView):
 
 
 class ProjectViewSet(ReadOnlyModelViewSet):
+    """ Liste détaillée des projets / problèmes / commentaires (réservée aux administrateurs) """
 
+    queryset = Project.objects.all()
     serializer_class = ProjectViewSetSerializer
     permission_classes = [IsAdminAuthenticated]
-
-    def get_queryset(self):
-        return Project.objects.all()

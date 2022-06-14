@@ -4,6 +4,8 @@ from authentication.models import User
 
 
 class RegisterSerializer(ModelSerializer):
+    """ Serializer du modèle User avec contrôle du mot de passe selon les règles de validation définies dans
+        Django et confirmation du mot de passe par double saisie """
 
     password = CharField(write_only=True, required=True, validators=[validate_password])
     password2 = CharField(write_only=True, required=True)
@@ -14,7 +16,7 @@ class RegisterSerializer(ModelSerializer):
 
     def validate(self, data):
         if data['password'] != data['password2']:
-            raise ValidationError('Les deux mots de passe ne sont pas identiques')
+            raise ValidationError({'password': 'Les deux mots de passe ne sont pas identiques'})
         return data
 
     def create(self, validated_data):
