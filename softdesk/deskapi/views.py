@@ -60,7 +60,8 @@ class ProjectDetail(APIView):
     def delete(self, request, *args, **kwargs):
         project = self.get_object()
         project.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        data = {'delete': 'ok'}
+        return Response(data, status=status.HTTP_202_ACCEPTED)
 
 
 class ContributorList(APIView):
@@ -100,7 +101,8 @@ class ContributorDelete(APIView):
     def delete(self, request, *args, **kwargs):
         contributor = self.get_object()
         contributor.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        data = {'delete': 'ok'}
+        return Response(data, status=status.HTTP_202_ACCEPTED)
 
 
 class IssueList(APIView):
@@ -161,7 +163,8 @@ class IssueDetail(APIView):
     def delete(self, request, *args, **kwargs):
         issue = self.get_object()
         issue.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        data = {'delete': 'ok'}
+        return Response(data, status=status.HTTP_202_ACCEPTED)
 
 
 class CommentList(APIView):
@@ -224,7 +227,8 @@ class CommentDetail(APIView):
     def delete(self, request, *args, **kwargs):
         comment = self.get_object()
         comment.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        data = {'delete': 'ok'}
+        return Response(data, status=status.HTTP_202_ACCEPTED)
 
 
 class ProjectViewSet(ReadOnlyModelViewSet):
