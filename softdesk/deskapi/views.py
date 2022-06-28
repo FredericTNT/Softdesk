@@ -154,10 +154,22 @@ class IssueDetail(APIView):
     def put(self, request, *args, **kwargs):
         issue = self.get_object()
         serializer = IssueSerializer(issue, data=request.data)
-        if serializer.is_valid() and self.IsProjectContributor(serializer.validated_data['assignee_user_id']) and\
-                self.IsProjectContributor(serializer.validated_data['author_user_id']):
-            serializer.save()
-            return Response(serializer.data)
+        if serializer.is_valid():
+            author_ok = True
+            if 'author_user_id' in serializer.validated_data:
+                author_ok = self.IsProjectContributor(serializer.validated_data['author_user_id'])
+            assignee_ok = True
+            if 'assignee_user_id' in serializer.validated_data:
+                assignee_ok = self.IsProjectContributor(serializer.validated_data['assignee_user_id'])
+            if author_ok and assignee_ok:
+                serializer.save()
+                return Response(serializer.data)
+            data = {}
+            if not author_ok:
+                data['author_user_id'] = "Invalide, l'auteur doit faire partie des contributeurs au projet"
+            if not assignee_ok:
+                data['assignee_user_id'] = "Invalide, le responsable doit faire partie des contributeurs au projet"
+            return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, *args, **kwargs):
@@ -219,9 +231,16 @@ class CommentDetail(APIView):
     def put(self, request, *args, **kwargs):
         comment = self.get_object()
         serializer = CommentSerializer(comment, data=request.data)
-        if serializer.is_valid() and self.IsProjectContributor(serializer.validated_data['author_user_id']):
-            serializer.save()
-            return Response(serializer.data)
+        if serializer.is_valid():
+            author_ok = True
+            if 'author_user_id' in serializer.validated_data:
+                author_ok = self.IsProjectContributor(serializer.validated_data['author_user_id'])
+            if author_ok:
+                serializer.save()
+                return Response(serializer.data)
+            else:
+                data = {'author_user_id': "Invalide, l'auteur doit faire partie des contributeurs au projet"}
+                return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, *args, **kwargs):
